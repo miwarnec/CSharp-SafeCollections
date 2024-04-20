@@ -9,6 +9,8 @@ This is fine, but it's very difficult to debug. Both for beginners, and for prof
 ### The Solution
 Instead, **C# Safe Collections** throw **in the place of modification** while iterating.
 
+Simply replace your **List/HashSet/Dictionary** with **SafeList/SafeHashSet/Dictionary** and wait for the exceptions to be thrown in the place of modification!
+
 ## Collections
 Collections are based on Unity 2022's C# / Mono, and modified with "CUSTOM CHANGE" comments.
 
