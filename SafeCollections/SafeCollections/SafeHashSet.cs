@@ -1,11 +1,10 @@
 // based on Unity's C# HashSet<T>, which is based on Mono C#.
 
-using System.Diagnostics;
+using System.Collections;
 using System.Runtime.Serialization;
 using System.Security;
-using System.Security.Permissions;
 
-namespace System.Collections.Generic
+namespace SafeCollections
 {
   [Serializable]
   public class SafeHashSet<T> : 
