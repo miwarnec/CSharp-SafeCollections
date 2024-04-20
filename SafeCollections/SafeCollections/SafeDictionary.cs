@@ -1,16 +1,16 @@
 // based on Unity's C# HashSet<T>, which is based on Mono C#.
 
+using System;
 using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using System.Security;
 using System.Threading;
 
 namespace SafeCollections
 {
   [DebuggerDisplay("Count = {Count}")]
-  [ComVisible(false)]
     [Serializable]
   public class SafeDictionary<TKey, TValue> : 
     IDictionary<TKey, TValue>,
@@ -299,7 +299,6 @@ namespace SafeCollections
       return (IEnumerator<KeyValuePair<TKey, TValue>>) new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
     }
 
-    [SecurityCritical]
     public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
     {
       if (info == null)
@@ -848,7 +847,11 @@ label_18:
         this.dictionary = dictionary;
       }
 
-      public SafeDictionary<TKey, TValue>.KeyCollection.Enumerator GetEnumerator() => new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
+      public SafeDictionary<TKey, TValue>.KeyCollection.Enumerator GetEnumerator()
+      {
+        
+        return new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
+      }
 
       public void CopyTo(TKey[] array, int index)
       {
@@ -889,9 +892,17 @@ label_18:
         return false;
       }
 
-            IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() => (IEnumerator<TKey>) new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
+      IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() 
+      {
+        this.dictionary.CheckEnumerating();
+          return (IEnumerator<TKey>) new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
+      }
 
-            IEnumerator IEnumerable.GetEnumerator() => (IEnumerator) new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
+      IEnumerator IEnumerable.GetEnumerator() 
+      {
+        this.dictionary.CheckEnumerating();
+          return (IEnumerator) new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
+      }
 
       void ICollection.CopyTo(Array array, int index)
       {
@@ -963,10 +974,15 @@ label_13:
           this.version = dictionary.version;
           this.index = 0;
           this.currentKey = default (TKey);
+
+          dictionary.enumerating = true;
         }
 
       public void Dispose()
         {
+          // CUSTOM CHANGE
+          dictionary.enumerating = false;
+          // END CUSTOM CHANGE
         }
 
       public bool MoveNext()
@@ -1030,7 +1046,11 @@ label_13:
         this.dictionary = dictionary;
       }
 
-      public SafeDictionary<TKey, TValue>.ValueCollection.Enumerator GetEnumerator() => new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
+      public SafeDictionary<TKey, TValue>.ValueCollection.Enumerator GetEnumerator()
+      {
+        this.dictionary.CheckEnumerating();
+        return new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
+      }
 
       public void CopyTo(TValue[] array, int index)
       {
@@ -1071,9 +1091,17 @@ label_13:
 
       bool ICollection<TValue>.Contains(TValue item) => this.dictionary.ContainsValue(item);
 
-            IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() => (IEnumerator<TValue>) new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
+      IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() 
+     {
+       this.dictionary.CheckEnumerating();
+      return (IEnumerator<TValue>) new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
+     }
 
-            IEnumerator IEnumerable.GetEnumerator() => (IEnumerator) new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
+      IEnumerator IEnumerable.GetEnumerator() 
+     {
+       this.dictionary.CheckEnumerating();
+      return (IEnumerator) new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
+     }
 
       void ICollection.CopyTo(Array array, int index)
       {
@@ -1145,10 +1173,15 @@ label_13:
           this.version = dictionary.version;
           this.index = 0;
           this.currentValue = default (TValue);
+
+          dictionary.enumerating = true;
         }
 
       public void Dispose()
         {
+          // CUSTOM CHANGE
+          dictionary.enumerating = false;
+          // END CUSTOM CHANGE
         }
 
       public bool MoveNext()
