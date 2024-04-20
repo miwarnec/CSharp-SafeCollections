@@ -39,6 +39,9 @@ foreach (int value in set)
     // instead, it throws immediately:
     //   > System.InvalidOperationException : Attempted to access collection while it's being enumerated elsewhere.
     //   > This would cause an InvalidOperationException.
-    set.Add(42);
+    Assert.Throws<InvalidOperationException>(() =>
+    {
+        set.Add(43);
+    });
 }
 ```
