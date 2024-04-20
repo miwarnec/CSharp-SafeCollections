@@ -453,11 +453,21 @@ namespace SafeCollections
       throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
     }
 
-        public SafeList<T>.Enumerator GetEnumerator() => new SafeList<T>.Enumerator(this);
+    public SafeList<T>.Enumerator GetEnumerator()
+    {
+      CheckEnumerating();
+      return new SafeList<T>.Enumerator(this);
+      }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => (IEnumerator<T>) new SafeList<T>.Enumerator(this);
+      IEnumerator<T> IEnumerable<T>.GetEnumerator() {
+          CheckEnumerating();
+            return (IEnumerator<T>) new SafeList<T>.Enumerator(this);
+        }
 
-        IEnumerator IEnumerable.GetEnumerator() => (IEnumerator) new SafeList<T>.Enumerator(this);
+      IEnumerator IEnumerable.GetEnumerator() {
+        CheckEnumerating();
+          return (IEnumerator) new SafeList<T>.Enumerator(this);
+    }
 
     public SafeList<T> GetRange(int index, int count)
     {
