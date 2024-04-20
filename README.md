@@ -8,6 +8,7 @@ Collections can be dropped in as single file as needed.
 It's recommended to go back to the original C# collections eventually for performance.
 
 - SafeList<T>
+- SafeHashSet<T>
 - SafeDictionary<K,V>
 
 # Multithreaded Access Detection
