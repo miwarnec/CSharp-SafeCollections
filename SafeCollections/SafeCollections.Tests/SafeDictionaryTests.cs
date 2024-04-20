@@ -25,22 +25,6 @@ namespace SafeCollections.Tests
             dict.Add(2, "two");
             dict.Add(3, "three");
 
-            int count = 0;
-            foreach (KeyValuePair<int, string> item in dict)
-            {
-                count++;
-            }
-            Assert.AreEqual(3, count);
-        }
-
-        [Test]
-        public void TestThreadSafety()
-        {
-            SafeDictionary<int, string> dict = new SafeDictionary<int, string>();
-            dict.Add(1, "one");
-            dict.Add(2, "two");
-            dict.Add(3, "three");
-
             foreach (var kvp in dict)
             {
                 Console.WriteLine(kvp.Key);

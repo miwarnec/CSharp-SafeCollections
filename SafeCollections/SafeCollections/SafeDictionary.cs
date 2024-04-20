@@ -38,23 +38,42 @@ namespace SafeCollections
     private const string HashSizeName = "HashSize";
     private const string KeyValuePairsName = "KeyValuePairs";
     private const string ComparerName = "Comparer";
+    
+    // CUSTOM CHANGE: enumerating is set true while enumerating, and false when done enumerating
+    private bool enumerating = false;
 
-        public SafeDictionary()
+    void CheckEnumerating()
+    {
+      if (enumerating)
+      {
+        InvalidOperationException exception = new InvalidOperationException(
+          "Attempted to access collection while it's being enumerated elsewhere. This would cause an InvalidOperationException when enumerating, which would cause a race condition which is hard to debug.");
+#if UNITY_2019_1_OR_NEWER
+                // in Unity: log but continue so the game behaves as before but adds the obvious exception message
+                UnityEngine.Debug.LogException(exception);
+#else
+        throw exception;
+#endif
+      }
+    }
+    // END CUSTOM CHANGE
+
+    public SafeDictionary()
       : this(0, (IEqualityComparer<TKey>) null)
     {
     }
 
-        public SafeDictionary(int capacity)
+    public SafeDictionary(int capacity)
       : this(capacity, (IEqualityComparer<TKey>) null)
     {
     }
 
-        public SafeDictionary(IEqualityComparer<TKey> comparer)
+    public SafeDictionary(IEqualityComparer<TKey> comparer)
       : this(0, comparer)
     {
     }
 
-        public SafeDictionary(int capacity, IEqualityComparer<TKey> comparer)
+    public SafeDictionary(int capacity, IEqualityComparer<TKey> comparer)
     {
       if (capacity < 0)
         throw new ArgumentOutOfRangeException("ExceptionArgument.capacity");
@@ -63,12 +82,12 @@ namespace SafeCollections
       this.comparer = comparer ?? (IEqualityComparer<TKey>) EqualityComparer<TKey>.Default;
     }
 
-        public SafeDictionary(IDictionary<TKey, TValue> dictionary)
+    public SafeDictionary(IDictionary<TKey, TValue> dictionary)
       : this(dictionary, (IEqualityComparer<TKey>) null)
     {
     }
 
-        public SafeDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer)
+    public SafeDictionary(IDictionary<TKey, TValue> dictionary, IEqualityComparer<TKey> comparer)
       : this(dictionary != null ? dictionary.Count : 0, comparer)
     {
       if (dictionary == null)
@@ -84,7 +103,7 @@ namespace SafeCollections
     //   get => this.comparer;
     // }
 
-        public int Count
+    public int Count
     {
       get => this.count - this.freeCount;
     }
@@ -93,6 +112,8 @@ namespace SafeCollections
     {
       get
       {
+        CheckEnumerating();
+        
         if (this.keys == null)
           this.keys = new SafeDictionary<TKey, TValue>.KeyCollection(this);
         return this.keys;
@@ -103,53 +124,63 @@ namespace SafeCollections
     {
       get
       {
+        CheckEnumerating();
+
         if (this.keys == null)
           this.keys = new SafeDictionary<TKey, TValue>.KeyCollection(this);
         return (ICollection<TKey>) this.keys;
       }
     }
 
-        IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys
+    IEnumerable<TKey> IReadOnlyDictionary<TKey, TValue>.Keys
     {
       get
       {
+        CheckEnumerating();
+
         if (this.keys == null)
           this.keys = new SafeDictionary<TKey, TValue>.KeyCollection(this);
         return (IEnumerable<TKey>) this.keys;
       }
     }
 
-        public SafeDictionary<TKey, TValue>.ValueCollection Values
+    public SafeDictionary<TKey, TValue>.ValueCollection Values
     {
       get
       {
+        CheckEnumerating();
+
         if (this.values == null)
           this.values = new SafeDictionary<TKey, TValue>.ValueCollection(this);
         return this.values;
       }
     }
 
-        ICollection<TValue> IDictionary<TKey, TValue>.Values
+    ICollection<TValue> IDictionary<TKey, TValue>.Values
     {
       get
       {
+        CheckEnumerating();
+
         if (this.values == null)
           this.values = new SafeDictionary<TKey, TValue>.ValueCollection(this);
         return (ICollection<TValue>) this.values;
       }
     }
 
-        IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values
+    IEnumerable<TValue> IReadOnlyDictionary<TKey, TValue>.Values
     {
       get
       {
+        CheckEnumerating();
+
         if (this.values == null)
           this.values = new SafeDictionary<TKey, TValue>.ValueCollection(this);
         return (IEnumerable<TValue>) this.values;
       }
     }
 
-        public TValue this[TKey key]
+    public TValue this[TKey key]
     {
       get
       {
@@ -159,14 +190,21 @@ namespace SafeCollections
         throw new KeyNotFoundException();
         return default (TValue);
       }
-      set => this.Insert(key, value, false);
+      set
+      {
+        CheckEnumerating();
+
+        this.Insert(key, value, false);
+      }
     }
 
-        public void Add(TKey key, TValue value) => this.Insert(key, value, true);
+    public void Add(TKey key, TValue value) => this.Insert(key, value, true);
 
-        void ICollection<KeyValuePair<TKey, TValue>>.Add(
+    void ICollection<KeyValuePair<TKey, TValue>>.Add(
       KeyValuePair<TKey, TValue> keyValuePair)
     {
+      CheckEnumerating();
+
       this.Add(keyValuePair.Key, keyValuePair.Value);
     }
 
@@ -180,6 +218,8 @@ namespace SafeCollections
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(
       KeyValuePair<TKey, TValue> keyValuePair)
     {
+      CheckEnumerating();
+
       int entry = this.FindEntry(keyValuePair.Key);
       if (entry < 0 || !EqualityComparer<TValue>.Default.Equals(this.entries[entry].value, keyValuePair.Value))
         return false;
@@ -187,8 +227,10 @@ namespace SafeCollections
       return true;
     }
 
-        public void Clear()
+    public void Clear()
     {
+      CheckEnumerating();
+
       if (this.count <= 0)
         return;
       for (int index = 0; index < this.buckets.Length; ++index)
@@ -200,9 +242,9 @@ namespace SafeCollections
       ++this.version;
     }
 
-        public bool ContainsKey(TKey key) => this.FindEntry(key) >= 0;
+    public bool ContainsKey(TKey key) => this.FindEntry(key) >= 0;
 
-        public bool ContainsValue(TValue value)
+    public bool ContainsValue(TValue value)
     {
       if ((object) value == null)
       {
@@ -226,6 +268,8 @@ namespace SafeCollections
 
     private void CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
     {
+      CheckEnumerating();
+
       if (array == null)
         throw new ArgumentNullException("ExceptionArgument.array");
       if (index < 0 || index > array.Length)
@@ -241,9 +285,19 @@ namespace SafeCollections
       }
     }
 
-        public SafeDictionary<TKey, TValue>.Enumerator GetEnumerator() => new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
+    public SafeDictionary<TKey, TValue>.Enumerator GetEnumerator()
+    {
+      CheckEnumerating();
 
-        IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator() => (IEnumerator<KeyValuePair<TKey, TValue>>) new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
+      return new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
+    }
+
+    IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
+    {
+      CheckEnumerating();
+
+      return (IEnumerator<KeyValuePair<TKey, TValue>>) new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
+    }
 
     [SecurityCritical]
     public virtual void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -278,6 +332,8 @@ namespace SafeCollections
 
     private void Initialize(int capacity)
     {
+      CheckEnumerating();
+
       int prime = HashHelpers.GetPrime(capacity);
       this.buckets = new int[prime];
       for (int index = 0; index < this.buckets.Length; ++index)
@@ -288,6 +344,8 @@ namespace SafeCollections
 
     private void Insert(TKey key, TValue value, bool add)
     {
+      CheckEnumerating();
+
       if ((object) key == null)
         throw new ArgumentNullException("ExceptionArgument.key");
       if (this.buckets == null)
@@ -374,6 +432,8 @@ namespace SafeCollections
 
     private void Resize(int newSize, bool forceNewHashCodes)
     {
+      CheckEnumerating();
+
       int[] numArray = new int[newSize];
       for (int index = 0; index < numArray.Length; ++index)
         numArray[index] = -1;
@@ -400,8 +460,10 @@ namespace SafeCollections
       this.entries = destinationArray;
     }
 
-        public bool Remove(TKey key)
+    public bool Remove(TKey key)
     {
+      CheckEnumerating();
+
       if ((object) key == null)
         throw new ArgumentNullException("ExceptionArgument.key");
       if (this.buckets != null)
@@ -432,7 +494,7 @@ namespace SafeCollections
       return false;
     }
 
-        public bool TryGetValue(TKey key, out TValue value)
+    public bool TryGetValue(TKey key, out TValue value)
     {
       int entry = this.FindEntry(key);
       if (entry >= 0)
@@ -455,15 +517,19 @@ namespace SafeCollections
       get => false;
     }
 
-        void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(
+    void ICollection<KeyValuePair<TKey, TValue>>.CopyTo(
       KeyValuePair<TKey, TValue>[] array,
       int index)
     {
+      CheckEnumerating();
+
       this.CopyTo(array, index);
     }
 
     void ICollection.CopyTo(Array array, int index)
     {
+      CheckEnumerating();
+
       if (array == null)
         throw new ArgumentNullException("ExceptionArgument.array");
       if (array.Rank != 1)
@@ -517,7 +583,13 @@ label_18:
       }
     }
 
-        IEnumerator IEnumerable.GetEnumerator() => (IEnumerator) new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
+    IEnumerator IEnumerable.GetEnumerator()
+    {
+      CheckEnumerating();
+
+      return (IEnumerator) new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
+      
+    }
 
     bool ICollection.IsSynchronized
     {
@@ -546,15 +618,23 @@ label_18:
 
         ICollection IDictionary.Keys
     {
-      get => (ICollection) this.Keys;
+      get
+      {
+        CheckEnumerating();
+        return (ICollection) this.Keys;
+      } 
     }
 
-        ICollection IDictionary.Values
+    ICollection IDictionary.Values
     {
-      get => (ICollection) this.Values;
+      get
+      {
+        CheckEnumerating();
+        return (ICollection) this.Values;
+      } 
     }
 
-        object IDictionary.this[object key]
+    object IDictionary.this[object key]
     {
       get
       {
@@ -568,6 +648,7 @@ label_18:
       }
       set
       {
+        CheckEnumerating();
         if (key == null)
           throw new ArgumentNullException("ExceptionArgument.key");
         // ThrowHelper.IfNullAndNullsAreIllegalThenThrow<TValue>(value, ExceptionArgument.value);
@@ -599,6 +680,7 @@ label_18:
 
         void IDictionary.Add(object key, object value)
     {
+      CheckEnumerating();
       if (key == null)
         throw new ArgumentNullException("ExceptionArgument.key");
       // ThrowHelper.IfNullAndNullsAreIllegalThenThrow<TValue>(value, ExceptionArgument.value);
@@ -626,6 +708,7 @@ label_18:
 
         void IDictionary.Remove(object key)
     {
+      CheckEnumerating();
       if (!SafeDictionary<TKey, TValue>.IsCompatibleKey(key))
         return;
       this.Remove((TKey) key);
@@ -661,6 +744,10 @@ label_18:
         this.index = 0;
         this.getEnumeratorRetType = getEnumeratorRetType;
         this.current = new KeyValuePair<TKey, TValue>();
+        
+        // CUSTOM CHANGE
+        dictionary.enumerating = true;
+        // END CUSTOM CHANGE
       }
 
       public bool MoveNext()
@@ -686,11 +773,15 @@ label_18:
         get => this.current;
       }
 
-      public void Dispose()
-      {
-      }
+      
+    public void Dispose()
+    {
+      // CUSTOM CHANGE
+      dictionary.enumerating = false;
+      // END CUSTOM CHANGE
+    }
 
-            object IEnumerator.Current
+      object IEnumerator.Current
       {
         get
         {
@@ -874,11 +965,11 @@ label_13:
           this.currentKey = default (TKey);
         }
 
-          public void Dispose()
+      public void Dispose()
         {
         }
 
-          public bool MoveNext()
+      public bool MoveNext()
         {
           if (this.version != this.dictionary.version)
             throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
@@ -896,7 +987,7 @@ label_13:
           return false;
         }
 
-          public TKey Current
+      public TKey Current
         {
           get => this.currentKey;
         }
@@ -1056,11 +1147,11 @@ label_13:
           this.currentValue = default (TValue);
         }
 
-          public void Dispose()
+      public void Dispose()
         {
         }
 
-          public bool MoveNext()
+      public bool MoveNext()
         {
           if (this.version != this.dictionary.version)
             throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
@@ -1078,7 +1169,7 @@ label_13:
           return false;
         }
 
-          public TValue Current
+      public TValue Current
         {
           get => this.currentValue;
         }
