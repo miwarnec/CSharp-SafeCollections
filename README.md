@@ -3,8 +3,15 @@ Safety wheels around C# collections in order to help beginner devs to debug thei
 
 For example, IllegalOperationException "Collection was modified while iterating" is hard to debug in complex projects where a lot is going on.
 
-# Multithreaded Access Protection
-For example:
+# Collections
+Collections can be dropped in as single file as needed.
+It's recommended to go back to the original C# collections eventually for performance.
+
+- SafeList<T>
+- SafeDictionary<K,V>
+
+# Multithreaded Access Detection
+Safe Collections report accidental access from other threads:
 ```cs
 // created on main thread
 SafeDictionary<int, string> dict = new SafeDictionary<int, string>();
