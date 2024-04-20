@@ -41,8 +41,16 @@ namespace SafeCollections.Tests
             dict.Add(2, "two");
             dict.Add(3, "three");
 
-            Task.Run(() =>
+            foreach (var kvp in dict)
             {
+                Console.WriteLine(kvp.Key);
+                
+                // reading while iterating should still be allowed
+                dict.ContainsKey(kvp.Key);
+                dict.ContainsValue(kvp.Value);
+                string n = dict[1];
+                dict.TryGetValue(1, out string val);
+                
                 // add
                 Assert.Throws<InvalidOperationException>(() =>
                 {
@@ -57,11 +65,6 @@ namespace SafeCollections.Tests
                 Assert.Throws<InvalidOperationException>(() =>
                 {
                     dict.Clear();
-                });
-                // [] get operator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    string value = dict[2];
                 });
                 // [] set operator
                 Assert.Throws<InvalidOperationException>(() =>
@@ -85,7 +88,7 @@ namespace SafeCollections.Tests
                     {
                     }
                 });
-            }).Wait();
+            }
         }
     }
 }
