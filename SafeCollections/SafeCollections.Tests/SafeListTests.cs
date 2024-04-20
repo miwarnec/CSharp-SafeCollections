@@ -34,48 +34,50 @@ namespace SafeCollections.Tests
         }
 
         [Test]
-        public void TestThreadSafety()
+        public void TestChangeWhileEnumerating()
         {
             SafeList<int> list = new SafeList<int>();
             list.Add(1);
             list.Add(2);
             list.Add(3);
 
-            Task.Run(() =>
+            foreach (int value in list)
             {
-                // add
+                Console.WriteLine(value);
+            
+                // reading while iterating should still be allowed
+                list.Contains(1);
+                int n = list[0];
+
+                // modifying while iterating should throw IMMEDIATELY, and not just in the enumerator.
+                //   > System.InvalidOperationException : Attempted to access collection while it's being enumerated elsewhere.
+                //   > This would cause an InvalidOperationException...
                 Assert.Throws<InvalidOperationException>(() =>
                 {
-                    list.Add(4);
+                    list.Add(42);
                 });
-                // remove
+            }
+        
+            // after enumeration, adding should be allowed again without throwing.
+            list.Add(4);
+        
+            // try another enumeration just to be sure
+            foreach (int value in list)
+            {
+                Console.WriteLine(value);
+            
+                // reading while iterating should still be allowed
+                list.Contains(2); 
+                int n = list[0];
+
+                // modifying while iterating should throw IMMEDIATELY, and not just in the enumerator.
+                //   > System.InvalidOperationException : Attempted to access collection while it's being enumerated elsewhere.
+                //   > This would cause an InvalidOperationException...
                 Assert.Throws<InvalidOperationException>(() =>
                 {
-                    list.Remove(3);
+                    list.Add(43);
                 });
-                // clear
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    list.Clear();
-                });
-                // enumerate
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    foreach (int item in list)
-                    {
-                    }
-                });
-                // [] get operator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    int x = list[0];
-                });
-                // [] set operator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    list[0] = 1;
-                });
-            });
+            }
         }
     }
 }
