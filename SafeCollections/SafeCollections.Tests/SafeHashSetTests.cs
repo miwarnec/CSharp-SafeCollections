@@ -55,6 +55,10 @@ public class SafeHashSetTests
             {
                 set.Add(42);
             });
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                set.Clear();
+            });
         }
         
         // after enumeration, adding should be allowed again without throwing.
