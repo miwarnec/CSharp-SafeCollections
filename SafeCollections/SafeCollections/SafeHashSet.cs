@@ -1,4 +1,4 @@
-// based on Unity's C# HashSet<T>
+// based on Unity's C# HashSet<T>, which is based on Mono C#.
 
 using System.Diagnostics;
 using System.Runtime.Serialization;
