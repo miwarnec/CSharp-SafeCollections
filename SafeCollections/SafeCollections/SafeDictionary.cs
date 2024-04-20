@@ -25,7 +25,15 @@ namespace SafeCollections
         {
             // detect access from another thread
             if (Thread.CurrentThread.ManagedThreadId != lastThreadId)
-                throw new InvalidOperationException($"{nameof(SafeDictionary<TKey, TValue>)} Race Condition detected: it was last accessed from ThreadId={lastThreadId} but now accessed from ThreadId={Thread.CurrentThread.ManagedThreadId}. This will cause undefined state, please debug your code to always access this from the same thread.");
+            {
+                InvalidOperationException exception = new InvalidOperationException($"{nameof(SafeDictionary<TKey, TValue>)} Race Condition detected: it was last accessed from ThreadId={lastThreadId} but now accessed from ThreadId={Thread.CurrentThread.ManagedThreadId}. This will cause undefined state, please debug your code to always access this from the same thread.");
+#if UNITY_2019_1_OR_NEWER
+                // log but continue
+                UnityEngine.Debug.LogException(exception)
+#else
+                throw exception;
+#endif
+            }
 
             // update last accessed thread id to always log last->current
             // instead of initial->current.
