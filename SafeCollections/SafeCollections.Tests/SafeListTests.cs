@@ -48,6 +48,7 @@ namespace SafeCollections.Tests
                 // reading while iterating should still be allowed
                 list.Contains(1);
                 int n = list[0];
+                int index = list.IndexOf(0);
 
                 // modifying while iterating should throw IMMEDIATELY, and not just in the enumerator.
                 //   > System.InvalidOperationException : Attempted to access collection while it's being enumerated elsewhere.
@@ -55,6 +56,14 @@ namespace SafeCollections.Tests
                 Assert.Throws<InvalidOperationException>(() =>
                 {
                     list.Add(42);
+                });
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    list[0] = 42;
+                });
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    list.Clear();
                 });
             }
         
@@ -76,6 +85,10 @@ namespace SafeCollections.Tests
                 Assert.Throws<InvalidOperationException>(() =>
                 {
                     list.Add(43);
+                });
+                Assert.Throws<InvalidOperationException>(() =>
+                {
+                    list[0] = 43;
                 });
             }
         }

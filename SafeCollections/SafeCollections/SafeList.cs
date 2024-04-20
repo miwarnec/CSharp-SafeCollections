@@ -25,6 +25,19 @@ namespace SafeCollections
     [NonSerialized]
     private object _syncRoot;
     private static readonly T[] _emptyArray = new T[0];
+    
+    // CUSTOM CHANGE: enumerating is set true while enumerating, and false when done enumerating
+    private bool enumerating = false;
+    
+    void CheckEnumerating()
+    {
+      if (enumerating)
+      {
+        throw new InvalidOperationException(
+          "Attempted to access collection while it's being enumerated elsewhere. This would cause an InvalidOperationException when enumerating, which would cause a race condition which is hard to debug.");
+      }
+    }
+    // END CUSTOM CHANGE
 
     public SafeList() => this._items = SafeList<T>._emptyArray;
 
@@ -67,9 +80,15 @@ namespace SafeCollections
 
     public int Capacity
     {
-      get => this._items.Length;
+      get
+      {
+        //CheckEnumerating(); // read is okay while iterating
+        return this._items.Length;
+      }
       set
       {
+        CheckEnumerating();
+
         if (value < this._size)
           throw new ArgumentOutOfRangeException("ExceptionArgument.value, ExceptionResource.ArgumentOutOfRange_SmallCapacity");
         if (value == this._items.Length)
@@ -88,7 +107,11 @@ namespace SafeCollections
 
     public int Count
     {
-      get => this._size;
+      get
+      {
+        //CheckEnumerating(); read is okay while iterating
+        return this._size;
+      }
     }
 
     bool IList.IsFixedSize
@@ -115,22 +138,28 @@ namespace SafeCollections
     {
       get
       {
+        CheckEnumerating();
+
         if (this._syncRoot == null)
           Interlocked.CompareExchange<object>(ref this._syncRoot, new object(), (object) null);
         return this._syncRoot;
       }
     }
 
-        public T this[int index]
+    public T this[int index]
     {
       get
       {
+        //CheckEnumerating(); read is okay while iterating
+
         if ((uint) index >= (uint) this._size)
           throw new ArgumentOutOfRangeException();
         return this._items[index];
       }
       set
       {
+        CheckEnumerating();
+
         if ((uint) index >= (uint) this._size)
           throw new ArgumentOutOfRangeException();
         this._items[index] = value;
@@ -145,11 +174,18 @@ namespace SafeCollections
       return value == null && (object) default (T) == null;
     }
 
-        object IList.this[int index]
-    {
-      get => (object) this[index];
-      set
+      object IList.this[int index]
       {
+        get
+        {
+          //CheckEnumerating(); read is okay while iterating
+
+          return (object) this[index];
+        }
+        set
+      {
+        CheckEnumerating();
+
         //ThrowHelper.IfNullAndNullsAreIllegalThenThrow<T>(value, ExceptionArgument.value);
         try
         {
@@ -160,18 +196,22 @@ namespace SafeCollections
           throw new ArgumentException("$Wrong value type: value, typeof (T)");
         }
       }
-    }
+      }
 
-        public void Add(T item)
+    public void Add(T item)
     {
+      CheckEnumerating();
+
       if (this._size == this._items.Length)
         this.EnsureCapacity(this._size + 1);
       this._items[this._size++] = item;
       ++this._version;
     }
 
-        int IList.Add(object item)
+    int IList.Add(object item)
     {
+      CheckEnumerating();
+
       //ThrowHelper.IfNullAndNullsAreIllegalThenThrow<T>(item, ExceptionArgument.item);
       try
       {
@@ -184,12 +224,14 @@ namespace SafeCollections
       return this.Count - 1;
     }
 
-        public void AddRange(IEnumerable<T> collection) => this.InsertRange(this._size, collection);
+    public void AddRange(IEnumerable<T> collection) => this.InsertRange(this._size, collection);
 
-        public ReadOnlyCollection<T> AsReadOnly() => new ReadOnlyCollection<T>((IList<T>) this);
+    public ReadOnlyCollection<T> AsReadOnly() => new ReadOnlyCollection<T>((IList<T>) this);
 
-        public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
+    public int BinarySearch(int index, int count, T item, IComparer<T> comparer)
     {
+      CheckEnumerating();
+
       if (index < 0)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum");
       if (count < 0)
@@ -199,12 +241,14 @@ namespace SafeCollections
       return Array.BinarySearch<T>(this._items, index, count, item, comparer);
     }
 
-        public int BinarySearch(T item) => this.BinarySearch(0, this.Count, item, (IComparer<T>) null);
+    public int BinarySearch(T item) => this.BinarySearch(0, this.Count, item, (IComparer<T>) null);
 
-        public int BinarySearch(T item, IComparer<T> comparer) => this.BinarySearch(0, this.Count, item, comparer);
+    public int BinarySearch(T item, IComparer<T> comparer) => this.BinarySearch(0, this.Count, item, comparer);
 
-        public void Clear()
+    public void Clear()
     {
+      CheckEnumerating();
+
       if (this._size > 0)
       {
         Array.Clear((Array) this._items, 0, this._size);
@@ -213,8 +257,10 @@ namespace SafeCollections
       ++this._version;
     }
 
-        public bool Contains(T item)
+    public bool Contains(T item)
     {
+      // CheckEnumerating(); read is ok while iterating
+
       if ((object) item == null)
       {
         for (int index = 0; index < this._size; ++index)
@@ -233,10 +279,12 @@ namespace SafeCollections
       return false;
     }
 
-        bool IList.Contains(object item) => SafeList<T>.IsCompatibleObject(item) && this.Contains((T) item);
+    bool IList.Contains(object item) => SafeList<T>.IsCompatibleObject(item) && this.Contains((T) item);
 
     public SafeList<TOutput> ConvertAll<TOutput>(Converter<T, TOutput> converter)
     {
+      CheckEnumerating();
+
       if (converter == null)
         throw new ArgumentNullException("ExceptionArgument.converter");
       SafeList<TOutput> outputList = new SafeList<TOutput>(this._size);
@@ -246,10 +294,12 @@ namespace SafeCollections
       return outputList;
     }
 
-        public void CopyTo(T[] array) => this.CopyTo(array, 0);
+    public void CopyTo(T[] array) => this.CopyTo(array, 0);
 
-        void ICollection.CopyTo(Array array, int arrayIndex)
+    void ICollection.CopyTo(Array array, int arrayIndex)
     {
+      CheckEnumerating();
+
       if (array != null && array.Rank != 1)
         throw new ArgumentException("ExceptionResource.Arg_RankMultiDimNotSupported");
       try
@@ -262,17 +312,21 @@ namespace SafeCollections
       }
     }
 
-        public void CopyTo(int index, T[] array, int arrayIndex, int count)
+    public void CopyTo(int index, T[] array, int arrayIndex, int count)
     {
+      CheckEnumerating();
+
       if (this._size - index < count)
         throw new ArgumentException("ExceptionResource.Argument_InvalidOffLen");
       Array.Copy((Array) this._items, index, (Array) array, arrayIndex, count);
     }
 
-        public void CopyTo(T[] array, int arrayIndex) => Array.Copy((Array) this._items, 0, (Array) array, arrayIndex, this._size);
+    public void CopyTo(T[] array, int arrayIndex) => Array.Copy((Array) this._items, 0, (Array) array, arrayIndex, this._size);
 
     private void EnsureCapacity(int min)
     {
+      CheckEnumerating();
+
       if (this._items.Length >= min)
         return;
       int num = this._items.Length == 0 ? 4 : this._items.Length * 2;
@@ -283,10 +337,12 @@ namespace SafeCollections
       this.Capacity = num;
     }
 
-        public bool Exists(Predicate<T> match) => this.FindIndex(match) != -1;
+    public bool Exists(Predicate<T> match) => this.FindIndex(match) != -1;
 
-        public T Find(Predicate<T> match)
+    public T Find(Predicate<T> match)
     {
+      //CheckEnumerating(); read is okay while iterating
+
       if (match == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       for (int index = 0; index < this._size; ++index)
@@ -297,8 +353,10 @@ namespace SafeCollections
       return default (T);
     }
 
-        public SafeList<T> FindAll(Predicate<T> match)
+    public SafeList<T> FindAll(Predicate<T> match)
     {
+      // CheckEnumerating(); read is ok while iterating
+
       if (match == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       SafeList<T> all = new SafeList<T>();
@@ -310,12 +368,14 @@ namespace SafeCollections
       return all;
     }
 
-        public int FindIndex(Predicate<T> match) => this.FindIndex(0, this._size, match);
+    public int FindIndex(Predicate<T> match) => this.FindIndex(0, this._size, match);
 
-        public int FindIndex(int startIndex, Predicate<T> match) => this.FindIndex(startIndex, this._size - startIndex, match);
+    public int FindIndex(int startIndex, Predicate<T> match) => this.FindIndex(startIndex, this._size - startIndex, match);
 
-        public int FindIndex(int startIndex, int count, Predicate<T> match)
+    public int FindIndex(int startIndex, int count, Predicate<T> match)
     {
+      // CheckEnumerating(); read is okay while iterating
+
       if ((uint) startIndex > (uint) this._size)
         throw new ArgumentOutOfRangeException("ExceptionArgument.startIndex, ExceptionResource.ArgumentOutOfRange_Index");
       if (count < 0 || startIndex > this._size - count)
@@ -331,8 +391,10 @@ namespace SafeCollections
       return -1;
     }
 
-        public T FindLast(Predicate<T> match)
+    public T FindLast(Predicate<T> match)
     {
+      // CheckEnumerating(); read is okay while iterating
+      
       if (match == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       for (int index = this._size - 1; index >= 0; --index)
@@ -343,12 +405,14 @@ namespace SafeCollections
       return default (T);
     }
 
-        public int FindLastIndex(Predicate<T> match) => this.FindLastIndex(this._size - 1, this._size, match);
+    public int FindLastIndex(Predicate<T> match) => this.FindLastIndex(this._size - 1, this._size, match);
 
-        public int FindLastIndex(int startIndex, Predicate<T> match) => this.FindLastIndex(startIndex, startIndex + 1, match);
+    public int FindLastIndex(int startIndex, Predicate<T> match) => this.FindLastIndex(startIndex, startIndex + 1, match);
 
-        public int FindLastIndex(int startIndex, int count, Predicate<T> match)
+    public int FindLastIndex(int startIndex, int count, Predicate<T> match)
     {
+      // CheckEnumerating(); read is okay while iterating
+      
       if (match == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       if (this._size == 0)
@@ -371,6 +435,8 @@ namespace SafeCollections
 
     public void ForEach(Action<T> action)
     {
+      CheckEnumerating();
+      
       if (action == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       int version = this._version;
@@ -389,6 +455,8 @@ namespace SafeCollections
 
     public SafeList<T> GetRange(int index, int count)
     {
+      // CheckEnumerating(); // read is ok while iterating
+      
       if (index < 0)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum");
       if (count < 0)
@@ -401,19 +469,28 @@ namespace SafeCollections
       return range;
     }
 
-        public int IndexOf(T item) => Array.IndexOf<T>(this._items, item, 0, this._size);
-
-        int IList.IndexOf(object item) => SafeList<T>.IsCompatibleObject(item) ? this.IndexOf((T) item) : -1;
-
-        public int IndexOf(T item, int index)
+    public int IndexOf(T item)
     {
+      // CheckEnumerating(); // read is ok while iterating
+
+      return Array.IndexOf<T>(this._items, item, 0, this._size);
+    } 
+
+    int IList.IndexOf(object item) => SafeList<T>.IsCompatibleObject(item) ? this.IndexOf((T) item) : -1;
+
+    public int IndexOf(T item, int index)
+    {
+      // CheckEnumerating(); // read is ok while iterating
+
       if (index > this._size)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_Index");
       return Array.IndexOf<T>(this._items, item, index, this._size - index);
     }
 
-        public int IndexOf(T item, int index, int count)
+    public int IndexOf(T item, int index, int count)
     {
+      // CheckEnumerating(); // read is ok while iterating
+
       if (index > this._size)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_Index");
       if (count < 0 || index > this._size - count)
@@ -421,8 +498,10 @@ namespace SafeCollections
       return Array.IndexOf<T>(this._items, item, index, count);
     }
 
-        public void Insert(int index, T item)
+    public void Insert(int index, T item)
     {
+      CheckEnumerating();
+      
       if ((uint) index > (uint) this._size)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_ListInsert");
       if (this._size == this._items.Length)
@@ -434,8 +513,10 @@ namespace SafeCollections
       ++this._version;
     }
 
-        void IList.Insert(int index, object item)
+    void IList.Insert(int index, object item)
     {
+      CheckEnumerating(); 
+
       //ThrowHelper.IfNullAndNullsAreIllegalThenThrow<T>(item, ExceptionArgument.item);
       try
       {
@@ -447,8 +528,10 @@ namespace SafeCollections
       }
     }
 
-        public void InsertRange(int index, IEnumerable<T> collection)
+    public void InsertRange(int index, IEnumerable<T> collection)
     {
+      CheckEnumerating();
+      
       if (collection == null)
         throw new ArgumentNullException("ExceptionArgument.collection");
       if ((uint) index > (uint) this._size)
@@ -483,10 +566,12 @@ namespace SafeCollections
       ++this._version;
     }
 
-        public int LastIndexOf(T item) => this._size == 0 ? -1 : this.LastIndexOf(item, this._size - 1, this._size);
+    public int LastIndexOf(T item) => this._size == 0 ? -1 : this.LastIndexOf(item, this._size - 1, this._size);
 
-        public int LastIndexOf(T item, int index)
+    public int LastIndexOf(T item, int index)
     {
+      // CheckEnumerating(); // read is ok while iterating
+
       if (index >= this._size)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_Index");
       return this.LastIndexOf(item, index, index + 1);
@@ -507,8 +592,10 @@ namespace SafeCollections
       return Array.LastIndexOf<T>(this._items, item, index, count);
     }
 
-        public bool Remove(T item)
+    public bool Remove(T item)
     {
+      CheckEnumerating();
+      
       int index = this.IndexOf(item);
       if (index < 0)
         return false;
@@ -516,15 +603,19 @@ namespace SafeCollections
       return true;
     }
 
-        void IList.Remove(object item)
+    void IList.Remove(object item)
     {
+      CheckEnumerating();
+      
       if (!SafeList<T>.IsCompatibleObject(item))
         return;
       this.Remove((T) item);
     }
 
-        public int RemoveAll(Predicate<T> match)
+    public int RemoveAll(Predicate<T> match)
     {
+      CheckEnumerating();
+      
       if (match == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       int index1 = 0;
@@ -547,8 +638,10 @@ namespace SafeCollections
       return num;
     }
 
-        public void RemoveAt(int index)
+    public void RemoveAt(int index)
     {
+      CheckEnumerating();
+      
       if ((uint) index >= (uint) this._size)
         throw new ArgumentOutOfRangeException();
       --this._size;
@@ -558,8 +651,10 @@ namespace SafeCollections
       ++this._version;
     }
 
-        public void RemoveRange(int index, int count)
+    public void RemoveRange(int index, int count)
     {
+      CheckEnumerating();
+      
       if (index < 0)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum");
       if (count < 0)
@@ -576,10 +671,12 @@ namespace SafeCollections
       ++this._version;
     }
 
-        public void Reverse() => this.Reverse(0, this.Count);
+    public void Reverse() => this.Reverse(0, this.Count);
 
-        public void Reverse(int index, int count)
+    public void Reverse(int index, int count)
     {
+        CheckEnumerating();
+      
       if (index < 0)
         throw new ArgumentOutOfRangeException("ExceptionArgument.index, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum");
       if (count < 0)
@@ -608,6 +705,8 @@ namespace SafeCollections
 
     public void Sort(Comparison<T> comparison)
     {
+      CheckEnumerating();
+      
       if (comparison == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       if (this._size <= 0)
@@ -615,22 +714,28 @@ namespace SafeCollections
       Array.Sort<T>(this._items, 0, this._size, (IComparer<T>) new FunctorComparer<T>(comparison));
     }
 
-        public T[] ToArray()
+    public T[] ToArray()
     {
+      // CheckEnumerating(); // read is ok while iterating
+
       T[] destinationArray = new T[this._size];
       Array.Copy((Array) this._items, 0, (Array) destinationArray, 0, this._size);
       return destinationArray;
     }
 
-        public void TrimExcess()
+    public void TrimExcess()
     {
+      CheckEnumerating();
+      
       if (this._size >= (int) ((double) this._items.Length * 0.9))
         return;
       this.Capacity = this._size;
     }
 
-        public bool TrueForAll(Predicate<T> match)
+      public bool TrueForAll(Predicate<T> match)
     {
+      // CheckEnumerating(); // read is ok while iterating
+
       if (match == null)
         throw new ArgumentNullException("ExceptionArgument.match");
       for (int index = 0; index < this._size; ++index)
@@ -741,7 +846,7 @@ namespace SafeCollections
       }
     }
 
-        [Serializable]
+    [Serializable]
     public struct Enumerator : IEnumerator<T>, IDisposable, IEnumerator
     {
       private SafeList<T> list;
@@ -755,13 +860,21 @@ namespace SafeCollections
         this.index = 0;
         this.version = list._version;
         this.current = default (T);
+        
+        // CUSTOM CHANGE
+        list.enumerating = true;
+        // END CUSTOM CHANGE
       }
 
-            public void Dispose()
+      
+      public void Dispose()
       {
+        // CUSTOM CHANGE
+        list.enumerating = false;
+        // END CUSTOM CHANGE
       }
 
-            public bool MoveNext()
+      public bool MoveNext()
       {
         SafeList<T> list = this.list;
         if (this.version != list._version || (uint) this.index >= (uint) list._size)
@@ -780,12 +893,12 @@ namespace SafeCollections
         return false;
       }
 
-            public T Current
+        public T Current
       {
         get => this.current;
       }
 
-            object IEnumerator.Current
+      object IEnumerator.Current
       {
         get
         {
@@ -795,7 +908,7 @@ namespace SafeCollections
         }
       }
 
-            void IEnumerator.Reset()
+      void IEnumerator.Reset()
       {
         if (this.version != this.list._version)
           throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
