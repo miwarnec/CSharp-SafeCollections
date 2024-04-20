@@ -34,37 +34,27 @@ public class SafeHashSetTests
     }
 
     [Test]
-    public void TestThreadSafety()
+    public void TestChangeWhileEnumerating()
     {
         SafeHashSet<int> set = new SafeHashSet<int>();
         set.Add(1);
         set.Add(2);
         set.Add(3);
 
-        Task.Run(() =>
+        foreach (int value in set)
         {
-            // add
+            Console.WriteLine(value);
+            
+            // reading while iterating should still be allowed
+            set.Contains(1); 
+
+            // modifying while iterating should throw IMMEDIATELY, and not just in the enumerator.
+            //   > System.InvalidOperationException : Attempted to access collection while it's being enumerated elsewhere.
+            //   > This would cause an InvalidOperationException...
             Assert.Throws<InvalidOperationException>(() =>
             {
-                set.Add(4);
+                set.Add(42);
             });
-            // remove
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                set.Remove(3);
-            });
-            // clear
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                set.Clear();
-            });
-            // enumerate
-            Assert.Throws<InvalidOperationException>(() =>
-            {
-                foreach (int item in set)
-                {
-                }
-            });
-        });
+        }
     }
 }
