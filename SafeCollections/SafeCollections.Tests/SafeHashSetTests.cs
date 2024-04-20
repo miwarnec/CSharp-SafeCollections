@@ -56,5 +56,25 @@ public class SafeHashSetTests
                 set.Add(42);
             });
         }
+        
+        // after enumeration, adding should be allowed again without throwing.
+        set.Add(4);
+        
+        // try another enumeration just to be sure
+        foreach (int value in set)
+        {
+            Console.WriteLine(value);
+            
+            // reading while iterating should still be allowed
+            set.Contains(2); 
+
+            // modifying while iterating should throw IMMEDIATELY, and not just in the enumerator.
+            //   > System.InvalidOperationException : Attempted to access collection while it's being enumerated elsewhere.
+            //   > This would cause an InvalidOperationException...
+            Assert.Throws<InvalidOperationException>(() =>
+            {
+                set.Add(43);
+            });
+        }
     }
 }
