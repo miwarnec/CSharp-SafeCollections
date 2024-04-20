@@ -12,19 +12,26 @@ namespace SafeCollections
         // the internal collection that we are protecting
         readonly Dictionary<TKey, TValue> dict;
 
-        // initial thread id to guard against access from other threads
-        readonly int initialThreadId;
+        // always remember last access thread id
+        int lastThreadId;
 
         public SafeDictionary()
         {
             dict = new Dictionary<TKey, TValue>();
-            initialThreadId = Thread.CurrentThread.ManagedThreadId;
+            lastThreadId = Thread.CurrentThread.ManagedThreadId;
         }
 
         protected void CheckThread()
         {
-            if (Thread.CurrentThread.ManagedThreadId != initialThreadId)
-                throw new InvalidOperationException($"{nameof(SafeDictionary<TKey, TValue>)} Race Condition detected: it was created from ThreadId={initialThreadId} but accessed from ThreadId={Thread.CurrentThread.ManagedThreadId}. This will cause undefined state, please debug your code to always access this from the same thread.");
+            // detect access from another thread
+            if (Thread.CurrentThread.ManagedThreadId != lastThreadId)
+                throw new InvalidOperationException($"{nameof(SafeDictionary<TKey, TValue>)} Race Condition detected: it was last accessed from ThreadId={lastThreadId} but now accessed from ThreadId={Thread.CurrentThread.ManagedThreadId}. This will cause undefined state, please debug your code to always access this from the same thread.");
+
+            // update last accessed thread id to always log last->current
+            // instead of initial->current.
+            // for example, setup may run from thread A, and main loop from thread B.
+            // in that case we still want to detect thread C accessing after thread B.
+            lastThreadId = Thread.CurrentThread.ManagedThreadId;
         }
 
         // IDictionary ////////////////////////////////////////////////////////
