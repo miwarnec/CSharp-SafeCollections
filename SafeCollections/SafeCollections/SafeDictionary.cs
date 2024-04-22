@@ -94,8 +94,6 @@ namespace SafeCollections
     {
       get
       {
-        CheckEnumerating();
-        
         if (this.keys == null)
           this.keys = new SafeDictionary<TKey, TValue>.KeyCollection(this);
         return this.keys;
@@ -106,8 +104,6 @@ namespace SafeCollections
     {
       get
       {
-        CheckEnumerating();
-
         if (this.keys == null)
           this.keys = new SafeDictionary<TKey, TValue>.KeyCollection(this);
         return (ICollection<TKey>) this.keys;
@@ -118,8 +114,6 @@ namespace SafeCollections
     {
       get
       {
-        CheckEnumerating();
-
         if (this.keys == null)
           this.keys = new SafeDictionary<TKey, TValue>.KeyCollection(this);
         return (IEnumerable<TKey>) this.keys;
@@ -130,8 +124,6 @@ namespace SafeCollections
     {
       get
       {
-        CheckEnumerating();
-
         if (this.values == null)
           this.values = new SafeDictionary<TKey, TValue>.ValueCollection(this);
         return this.values;
@@ -142,8 +134,6 @@ namespace SafeCollections
     {
       get
       {
-        CheckEnumerating();
-
         if (this.values == null)
           this.values = new SafeDictionary<TKey, TValue>.ValueCollection(this);
         return (ICollection<TValue>) this.values;
@@ -154,8 +144,6 @@ namespace SafeCollections
     {
       get
       {
-        CheckEnumerating();
-
         if (this.values == null)
           this.values = new SafeDictionary<TKey, TValue>.ValueCollection(this);
         return (IEnumerable<TValue>) this.values;
@@ -174,8 +162,6 @@ namespace SafeCollections
       }
       set
       {
-        CheckEnumerating();
-
         this.Insert(key, value, false);
       }
     }
@@ -185,8 +171,6 @@ namespace SafeCollections
     void ICollection<KeyValuePair<TKey, TValue>>.Add(
       KeyValuePair<TKey, TValue> keyValuePair)
     {
-      CheckEnumerating();
-
       this.Add(keyValuePair.Key, keyValuePair.Value);
     }
 
@@ -200,8 +184,6 @@ namespace SafeCollections
         bool ICollection<KeyValuePair<TKey, TValue>>.Remove(
       KeyValuePair<TKey, TValue> keyValuePair)
     {
-      CheckEnumerating();
-
       int entry = this.FindEntry(keyValuePair.Key);
       if (entry < 0 || !EqualityComparer<TValue>.Default.Equals(this.entries[entry].value, keyValuePair.Value))
         return false;
@@ -211,8 +193,6 @@ namespace SafeCollections
 
     public void Clear()
     {
-      CheckEnumerating();
-
       if (this.count <= 0)
         return;
       for (int index = 0; index < this.buckets.Length; ++index)
@@ -222,6 +202,7 @@ namespace SafeCollections
       this.count = 0;
       this.freeCount = 0;
       ++this.version;
+      OnVersionChanged(); // CUSTOM CHANGE
     }
 
     public bool ContainsKey(TKey key) => this.FindEntry(key) >= 0;
@@ -250,8 +231,6 @@ namespace SafeCollections
 
     private void CopyTo(KeyValuePair<TKey, TValue>[] array, int index)
     {
-      CheckEnumerating();
-
       if (array == null)
         throw new ArgumentNullException("ExceptionArgument.array");
       if (index < 0 || index > array.Length)
@@ -269,15 +248,11 @@ namespace SafeCollections
 
     public SafeDictionary<TKey, TValue>.Enumerator GetEnumerator()
     {
-      CheckEnumerating();
-
       return new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
     }
 
     IEnumerator<KeyValuePair<TKey, TValue>> IEnumerable<KeyValuePair<TKey, TValue>>.GetEnumerator()
     {
-      CheckEnumerating();
-
       return (IEnumerator<KeyValuePair<TKey, TValue>>) new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
     }
 
@@ -313,8 +288,6 @@ namespace SafeCollections
 
     private void Initialize(int capacity)
     {
-      CheckEnumerating();
-
       int prime = HashHelpers.GetPrime(capacity);
       this.buckets = new int[prime];
       for (int index = 0; index < this.buckets.Length; ++index)
@@ -325,8 +298,6 @@ namespace SafeCollections
 
     private void Insert(TKey key, TValue value, bool add)
     {
-      CheckEnumerating();
-
       if ((object) key == null)
         throw new ArgumentNullException("ExceptionArgument.key");
       if (this.buckets == null)
@@ -342,6 +313,7 @@ namespace SafeCollections
             throw new ArgumentException("ExceptionResource.Argument_AddingDuplicate");
           this.entries[index2].value = value;
           ++this.version;
+          OnVersionChanged(); // CUSTOM CHANGE
           return;
         }
         ++num2;
@@ -369,6 +341,7 @@ namespace SafeCollections
       this.entries[index3].value = value;
       this.buckets[index1] = index3;
       ++this.version;
+      OnVersionChanged(); // CUSTOM CHANGE
       if (num2 <= 100/* || !HashHelpers.IsWellKnownEqualityComparer((object) this.comparer)*/)
         return;
       // this.comparer = (IEqualityComparer<TKey>) HashHelpers.GetRandomizedEqualityComparer((object) this.comparer);
@@ -413,8 +386,6 @@ namespace SafeCollections
 
     private void Resize(int newSize, bool forceNewHashCodes)
     {
-      CheckEnumerating();
-
       int[] numArray = new int[newSize];
       for (int index = 0; index < numArray.Length; ++index)
         numArray[index] = -1;
@@ -443,8 +414,6 @@ namespace SafeCollections
 
     public bool Remove(TKey key)
     {
-      CheckEnumerating();
-
       if ((object) key == null)
         throw new ArgumentNullException("ExceptionArgument.key");
       if (this.buckets != null)
@@ -467,6 +436,7 @@ namespace SafeCollections
             this.freeList = index3;
             ++this.freeCount;
             ++this.version;
+            OnVersionChanged(); // CUSTOM CHANGE
             return true;
           }
           index2 = index3;
@@ -502,15 +472,11 @@ namespace SafeCollections
       KeyValuePair<TKey, TValue>[] array,
       int index)
     {
-      CheckEnumerating();
-
       this.CopyTo(array, index);
     }
 
     void ICollection.CopyTo(Array array, int index)
     {
-      CheckEnumerating();
-
       if (array == null)
         throw new ArgumentNullException("ExceptionArgument.array");
       if (array.Rank != 1)
@@ -566,8 +532,6 @@ label_18:
 
     IEnumerator IEnumerable.GetEnumerator()
     {
-      CheckEnumerating();
-
       return (IEnumerator) new SafeDictionary<TKey, TValue>.Enumerator(this, 2);
       
     }
@@ -601,7 +565,6 @@ label_18:
     {
       get
       {
-        CheckEnumerating();
         return (ICollection) this.Keys;
       } 
     }
@@ -610,7 +573,6 @@ label_18:
     {
       get
       {
-        CheckEnumerating();
         return (ICollection) this.Values;
       } 
     }
@@ -629,7 +591,6 @@ label_18:
       }
       set
       {
-        CheckEnumerating();
         if (key == null)
           throw new ArgumentNullException("ExceptionArgument.key");
         // ThrowHelper.IfNullAndNullsAreIllegalThenThrow<TValue>(value, ExceptionArgument.value);
@@ -661,7 +622,6 @@ label_18:
 
         void IDictionary.Add(object key, object value)
     {
-      CheckEnumerating();
       if (key == null)
         throw new ArgumentNullException("ExceptionArgument.key");
       // ThrowHelper.IfNullAndNullsAreIllegalThenThrow<TValue>(value, ExceptionArgument.value);
@@ -689,7 +649,6 @@ label_18:
 
         void IDictionary.Remove(object key)
     {
-      CheckEnumerating();
       if (!SafeDictionary<TKey, TValue>.IsCompatibleKey(key))
         return;
       this.Remove((TKey) key);
@@ -872,13 +831,11 @@ label_18:
 
       IEnumerator<TKey> IEnumerable<TKey>.GetEnumerator() 
       {
-        this.dictionary.CheckEnumerating();
           return (IEnumerator<TKey>) new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
       }
 
       IEnumerator IEnumerable.GetEnumerator() 
       {
-        this.dictionary.CheckEnumerating();
           return (IEnumerator) new SafeDictionary<TKey, TValue>.KeyCollection.Enumerator(this.dictionary);
       }
 
@@ -1024,7 +981,6 @@ label_13:
 
       public SafeDictionary<TKey, TValue>.ValueCollection.Enumerator GetEnumerator()
       {
-        this.dictionary.CheckEnumerating();
         return new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
       }
 
@@ -1069,13 +1025,11 @@ label_13:
 
       IEnumerator<TValue> IEnumerable<TValue>.GetEnumerator() 
      {
-       this.dictionary.CheckEnumerating();
       return (IEnumerator<TValue>) new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
      }
 
       IEnumerator IEnumerable.GetEnumerator() 
      {
-       this.dictionary.CheckEnumerating();
       return (IEnumerator) new SafeDictionary<TKey, TValue>.ValueCollection.Enumerator(this.dictionary);
      }
 

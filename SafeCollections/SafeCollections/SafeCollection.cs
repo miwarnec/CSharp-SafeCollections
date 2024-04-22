@@ -23,8 +23,9 @@ namespace SafeCollections
           enumerating = false;
         }
 
-        // call this internally before any writes to the collection.
-        protected void CheckEnumerating()
+        // call this internally AFTER .version changed.
+        // this way the modification throws, and the enumeration throws because .version still had time to change.
+        protected void OnVersionChanged()
         {
           if (enumerating)
           {

@@ -89,8 +89,6 @@ namespace SafeCollections
 
     private void CopyFrom(SafeHashSet<T> source)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       int count = source.m_count;
       if (count == 0)
         return;
@@ -140,8 +138,6 @@ namespace SafeCollections
     
     public void Clear()
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (this.m_lastIndex > 0)
       {
         Array.Clear((Array) this.m_slots, 0, this.m_lastIndex);
@@ -151,13 +147,12 @@ namespace SafeCollections
         this.m_freeList = -1;
       }
       ++this.m_version;
+      OnVersionChanged(); // CUSTOM CHANGE
     }
 
     
     public bool Contains(T item)
     {
-      //CheckEnumerating(); // read while iterating is allowed
-
       if (this.m_buckets != null)
       {
         int hashCode = this.InternalGetHashCode(item);
@@ -176,8 +171,6 @@ namespace SafeCollections
     
     public bool Remove(T item)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       if (this.m_buckets != null)
       {
         int hashCode = this.InternalGetHashCode(item);
@@ -196,6 +189,7 @@ namespace SafeCollections
             this.m_slots[index3].next = this.m_freeList;
             --this.m_count;
             ++this.m_version;
+            OnVersionChanged(); // CUSTOM CHANGE
             if (this.m_count == 0)
             {
               this.m_lastIndex = 0;
@@ -216,8 +210,6 @@ namespace SafeCollections
     {
       get
       {
-        CheckEnumerating(); // CUSTOM CHANGE
-
         return this.m_count;
       }
     }
@@ -231,23 +223,18 @@ namespace SafeCollections
     
     public SafeHashSet<T>.Enumerator GetEnumerator()
     {
-      CheckEnumerating(); // CUSTOM CHANGE
       return new SafeHashSet<T>.Enumerator(this);
     } 
 
     
     IEnumerator<T> IEnumerable<T>.GetEnumerator() 
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       return (IEnumerator<T>) new SafeHashSet<T>.Enumerator(this);
     }
 
     
     IEnumerator IEnumerable.GetEnumerator() 
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
      return (IEnumerator) new SafeHashSet<T>.Enumerator(this);
     }
 
@@ -298,8 +285,6 @@ namespace SafeCollections
 
     public bool TryGetValue(T equalValue, out T actualValue)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (this.m_buckets != null)
       {
         int index = this.InternalIndexOf(equalValue);
@@ -316,8 +301,6 @@ namespace SafeCollections
     
     public void UnionWith(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       foreach (T obj in other)
@@ -327,8 +310,6 @@ namespace SafeCollections
     
     public void IntersectWith(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (this.m_count == 0)
@@ -352,8 +333,6 @@ namespace SafeCollections
     
     public void ExceptWith(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (this.m_count == 0)
@@ -372,8 +351,6 @@ namespace SafeCollections
     
     public void SymmetricExceptWith(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (this.m_count == 0)
@@ -389,8 +366,6 @@ namespace SafeCollections
     
     public bool IsSubsetOf(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (this.m_count == 0)
@@ -404,8 +379,6 @@ namespace SafeCollections
     
     public bool IsProperSubsetOf(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (other is ICollection<T> objs)
@@ -422,8 +395,6 @@ namespace SafeCollections
     
     public bool IsSupersetOf(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (other is ICollection<T> objs)
@@ -439,8 +410,6 @@ namespace SafeCollections
     
     public bool IsProperSupersetOf(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-      
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (this.m_count == 0)
@@ -459,8 +428,6 @@ namespace SafeCollections
     
     public bool Overlaps(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       if (other == null)
         throw new ArgumentNullException(nameof (other));
       if (this.m_count == 0)
@@ -476,8 +443,6 @@ namespace SafeCollections
     
     public bool SetEquals(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       switch (other)
       {
         case null:
@@ -498,8 +463,6 @@ namespace SafeCollections
     
     public void CopyTo(T[] array, int arrayIndex, int count)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       if (array == null)
         throw new ArgumentNullException(nameof (array));
       if (arrayIndex < 0)
@@ -522,8 +485,6 @@ namespace SafeCollections
     
     public int RemoveWhere(Predicate<T> match)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       if (match == null)
         throw new ArgumentNullException(nameof (match));
       int num = 0;
@@ -548,13 +509,12 @@ namespace SafeCollections
     
     public void TrimExcess()
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       if (this.m_count == 0)
       {
         this.m_buckets = (int[]) null;
         this.m_slots = (SafeHashSet<T>.Slot[]) null;
         ++this.m_version;
+        OnVersionChanged(); // CUSTOM CHANGE
       }
       else
       {
@@ -584,8 +544,6 @@ namespace SafeCollections
 
     private void Initialize(int capacity)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       int prime = HashHelpers.GetPrime(capacity);
       this.m_buckets = new int[prime];
       this.m_slots = new SafeHashSet<T>.Slot[prime];
@@ -593,8 +551,6 @@ namespace SafeCollections
 
     private void IncreaseCapacity()
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       int newSize = HashHelpers.ExpandPrime(this.m_count);
       if (newSize <= this.m_count)
         throw new ArgumentException("Arg_HSCapacityOverflow");
@@ -603,8 +559,6 @@ namespace SafeCollections
 
     private void SetCapacity(int newSize, bool forceNewHashCodes)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       SafeHashSet<T>.Slot[] destinationArray = new SafeHashSet<T>.Slot[newSize];
       if (this.m_slots != null)
         Array.Copy((Array) this.m_slots, 0, (Array) destinationArray, 0, this.m_lastIndex);
@@ -629,8 +583,6 @@ namespace SafeCollections
 
     private bool AddIfNotPresent(T value)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       if (this.m_buckets == null)
         this.Initialize(0);
       int hashCode = this.InternalGetHashCode(value);
@@ -664,6 +616,7 @@ namespace SafeCollections
       this.m_buckets[index1] = index3 + 1;
       ++this.m_count;
       ++this.m_version;
+      OnVersionChanged(); // CUSTOM CHANGE
       // if (num > 100 && HashHelpers.IsWellKnownEqualityComparer((object) this.m_comparer))
       // {
       //   this.m_comparer = (IEqualityComparer<T>) HashHelpers.GetRandomizedEqualityComparer((object) this.m_comparer);
@@ -674,8 +627,6 @@ namespace SafeCollections
 
     private void AddValue(int index, int hashCode, T value)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       int index1 = hashCode % this.m_buckets.Length;
       this.m_slots[index].hashCode = hashCode;
       this.m_slots[index].value = value;
@@ -685,8 +636,6 @@ namespace SafeCollections
 
     private bool ContainsAllElements(IEnumerable<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       foreach (T obj in other)
       {
         if (!this.Contains(obj))
@@ -697,8 +646,6 @@ namespace SafeCollections
 
     private bool IsSubsetOfHashSetWithSameEC(SafeHashSet<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       foreach (T obj in this)
       {
         if (!other.Contains(obj))
@@ -709,8 +656,6 @@ namespace SafeCollections
 
     private void IntersectWithHashSetWithSameEC(SafeHashSet<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       for (int index = 0; index < this.m_lastIndex; ++index)
       {
         if (this.m_slots[index].hashCode >= 0)
@@ -753,8 +698,6 @@ namespace SafeCollections
 
     private int InternalIndexOf(T item)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       int hashCode = this.InternalGetHashCode(item);
       for (int index = this.m_buckets[hashCode % this.m_buckets.Length] - 1; index >= 0; index = this.m_slots[index].next)
       {
@@ -766,8 +709,6 @@ namespace SafeCollections
 
     private void SymmetricExceptWithUniqueHashSet(SafeHashSet<T> other)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       foreach (T obj in other)
       {
         if (!this.Remove(obj))
@@ -814,8 +755,6 @@ namespace SafeCollections
 
     private bool AddOrGetLocation(T value, out int location)
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       int hashCode = this.InternalGetHashCode(value);
       int index1 = hashCode % this.m_buckets.Length;
       for (int index2 = this.m_buckets[hashCode % this.m_buckets.Length] - 1; index2 >= 0; index2 = this.m_slots[index2].next)
@@ -848,6 +787,7 @@ namespace SafeCollections
       this.m_buckets[index1] = index3 + 1;
       ++this.m_count;
       ++this.m_version;
+      OnVersionChanged(); // CUSTOM CHANGE
       location = index3;
       return true;
     }
@@ -913,8 +853,6 @@ namespace SafeCollections
 
     internal T[] ToArray()
     {
-      CheckEnumerating(); // CUSTOM CHANGE
-
       T[] array = new T[this.Count];
       this.CopyTo(array);
       return array;

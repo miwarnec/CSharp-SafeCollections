@@ -25,54 +25,29 @@ namespace SafeCollections.Tests
             dict.Add(2, "two");
             dict.Add(3, "three");
 
-            foreach (var kvp in dict)
+            // below code modifies while iterating, so this should throw an InvalidOperationException.
+            Assert.Throws<InvalidOperationException>(() =>
             {
-                Console.WriteLine(kvp.Key);
-                
-                // reading while iterating should still be allowed
-                dict.ContainsKey(kvp.Key);
-                dict.ContainsValue(kvp.Value);
-                string n = dict[1];
-                dict.TryGetValue(1, out string val);
-                
-                // add
-                Assert.Throws<InvalidOperationException>(() =>
+                foreach (var kvp in dict)
                 {
-                    dict.Add(4, "four");
-                });
-                // remove
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict.Remove(3);
-                });
-                // clear
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict.Clear();
-                });
-                // [] set operator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict[2] = "two";
-                });
-                // Keys
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    ICollection<int> keys = dict.Keys;
-                });
-                // Values
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    ICollection<string> values = dict.Values;
-                });
-                // enumerator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    foreach (KeyValuePair<int, string> item in dict)
-                    {
-                    }
-                });
-            }
+                    Console.WriteLine(kvp.Key);
+
+                    // reading while iterating should still be allowed
+                    dict.ContainsKey(kvp.Key);
+                    dict.ContainsValue(kvp.Value);
+                    string n = dict[1];
+                    dict.TryGetValue(1, out string val);
+
+                    // add
+                    Assert.Throws<InvalidOperationException>(() => { dict.Add(4, "four"); });
+                    // remove
+                    Assert.Throws<InvalidOperationException>(() => { dict.Remove(3); });
+                    // clear
+                    Assert.Throws<InvalidOperationException>(() => { dict.Clear(); });
+                    // [] set operator
+                    Assert.Throws<InvalidOperationException>(() => { dict[2] = "two"; });
+                }
+            });
         }
 
         [Test]
@@ -83,53 +58,28 @@ namespace SafeCollections.Tests
             dict.Add(2, "two");
             dict.Add(3, "three");
 
-            foreach (var key in dict.Keys)
+            // below code modifies while iterating, so this should throw an InvalidOperationException.
+            Assert.Throws<InvalidOperationException>(() =>
             {
-                Console.WriteLine(key);
-                
-                // reading while iterating should still be allowed
-                dict.ContainsKey(key);
-                string n = dict[1];
-                dict.TryGetValue(1, out string val);
-                
-                // add
-                Assert.Throws<InvalidOperationException>(() =>
+                foreach (var key in dict.Keys)
                 {
-                    dict.Add(4, "four");
-                });
-                // remove
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict.Remove(3);
-                });
-                // clear
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict.Clear();
-                });
-                // [] set operator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict[2] = "two";
-                });
-                // Keys
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    ICollection<int> keys = dict.Keys;
-                });
-                // Values
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    ICollection<string> values = dict.Values;
-                });
-                // enumerator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    foreach (KeyValuePair<int, string> item in dict)
-                    {
-                    }
-                });
-            }
+                    Console.WriteLine(key);
+
+                    // reading while iterating should still be allowed
+                    dict.ContainsKey(key);
+                    string n = dict[1];
+                    dict.TryGetValue(1, out string val);
+
+                    // add
+                    Assert.Throws<InvalidOperationException>(() => { dict.Add(4, "four"); });
+                    // remove
+                    Assert.Throws<InvalidOperationException>(() => { dict.Remove(3); });
+                    // clear
+                    Assert.Throws<InvalidOperationException>(() => { dict.Clear(); });
+                    // [] set operator
+                    Assert.Throws<InvalidOperationException>(() => { dict[2] = "two"; });
+                }
+            });
         }
 
         [Test]
@@ -140,54 +90,28 @@ namespace SafeCollections.Tests
             dict.Add(2, "two");
             dict.Add(3, "three");
 
-            foreach (var value in dict.Values)
+            // below code modifies while iterating, so this should throw an InvalidOperationException.
+            Assert.Throws<InvalidOperationException>(() =>
             {
-                Console.WriteLine(value);
-                
-                // reading while iterating should still be allowed
-                dict.ContainsKey(1);
-                string n = dict[1];
-                dict.TryGetValue(1, out string val);
-                
-                // add
-                Assert.Throws<InvalidOperationException>(() =>
+                foreach (var value in dict.Values)
                 {
-                    dict.Add(4, "four");
-                });
-                // remove
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict.Remove(3);
-                });
-                // clear
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict.Clear();
-                });
-                // [] set operator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    dict[2] = "two";
-                });
-                // Keys
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    ICollection<int> keys = dict.Keys;
-                });
-                // Values
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    ICollection<string> values = dict.Values;
-                });
-                // enumerator
-                Assert.Throws<InvalidOperationException>(() =>
-                {
-                    foreach (KeyValuePair<int, string> item in dict)
-                    {
-                    }
-                });
-            }
-            
+                    Console.WriteLine(value);
+
+                    // reading while iterating should still be allowed
+                    dict.ContainsKey(1);
+                    string n = dict[1];
+                    dict.TryGetValue(1, out string val);
+
+                    // add
+                    Assert.Throws<InvalidOperationException>(() => { dict.Add(4, "four"); });
+                    // remove
+                    Assert.Throws<InvalidOperationException>(() => { dict.Remove(3); });
+                    // clear
+                    Assert.Throws<InvalidOperationException>(() => { dict.Clear(); });
+                    // [] set operator
+                    Assert.Throws<InvalidOperationException>(() => { dict[2] = "two"; });
+                }
+            });
         }
     }
 }
