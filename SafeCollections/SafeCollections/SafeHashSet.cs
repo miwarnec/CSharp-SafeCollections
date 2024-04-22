@@ -7,7 +7,8 @@ using System.Security;
 namespace SafeCollections
 {
   [Serializable]
-  public class SafeHashSet<T> : 
+  public class SafeHashSet<T> :
+    SafeCollection,
     ICollection<T>,
     IEnumerable<T>,
     IEnumerable,
@@ -31,27 +32,7 @@ namespace SafeCollections
     private IEqualityComparer<T> m_comparer;
     private int m_version;
     private SerializationInfo m_siInfo;
-    
-    // CUSTOM CHANGE: enumerating is set true while enumerating, and false when done enumerating
-    private bool enumerating = false;
 
-    void CheckEnumerating()
-    {
-      if (enumerating)
-      {
-        InvalidOperationException exception = new InvalidOperationException(
-          "Attempted to access collection while it's being enumerated elsewhere. This would cause an InvalidOperationException when enumerating, which would cause a race condition which is hard to debug.");
-#if UNITY_2019_1_OR_NEWER
-                // in Unity: log but continue so the game behaves as before but adds the obvious exception message
-                UnityEngine.Debug.LogException(exception);
-#else
-        throw exception;
-#endif
-      }
-    }
-    // END CUSTOM CHANGE
-
-    
     public SafeHashSet()
       : this((IEqualityComparer<T>) EqualityComparer<T>.Default)
     {

@@ -8,7 +8,8 @@ namespace SafeCollections
 {
   [DebuggerDisplay("Count = {Count}")]
     [Serializable]
-  public class SafeList<T> : 
+  public class SafeList<T> :
+    SafeCollection,
     IList<T>,
     ICollection<T>,
     IEnumerable<T>,
@@ -25,25 +26,6 @@ namespace SafeCollections
     [NonSerialized]
     private object _syncRoot;
     private static readonly T[] _emptyArray = new T[0];
-    
-    // CUSTOM CHANGE: enumerating is set true while enumerating, and false when done enumerating
-    private bool enumerating = false;
-    
-    void CheckEnumerating()
-    {
-      if (enumerating)
-      {
-        InvalidOperationException exception = new InvalidOperationException(
-          "Attempted to access collection while it's being enumerated elsewhere. This would cause an InvalidOperationException when enumerating, which would cause a race condition which is hard to debug.");
-#if UNITY_2019_1_OR_NEWER
-                // in Unity: log but continue so the game behaves as before but adds the obvious exception message
-                UnityEngine.Debug.LogException(exception);
-#else
-        throw exception;
-#endif
-      }
-    }
-    // END CUSTOM CHANGE
 
     public SafeList() => this._items = SafeList<T>._emptyArray;
 
