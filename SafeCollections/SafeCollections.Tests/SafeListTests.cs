@@ -92,5 +92,36 @@ namespace SafeCollections.Tests
                 });
             }
         }
+
+        [Test]
+        public void TestFromAnotherThread()
+        {
+            SafeList<int> list = new SafeList<int>();
+            list.Add(1);
+            list.Add(2);
+            list.Add(3);
+
+            foreach (int value in list)
+            {
+                // try to access from another thread
+                Thread thread = new Thread(() =>
+                {
+                    Assert.Throws<InvalidOperationException>(() =>
+                    {
+                        list.Add(42);
+                    });
+                    Assert.Throws<InvalidOperationException>(() =>
+                    {
+                        list[0] = 42;
+                    });
+                    Assert.Throws<InvalidOperationException>(() =>
+                    {
+                        list.Clear();
+                    });
+                });
+                thread.Start();
+                thread.Join();
+            }
+        }
     }
 }
