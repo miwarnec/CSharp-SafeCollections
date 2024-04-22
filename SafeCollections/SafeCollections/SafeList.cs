@@ -392,7 +392,7 @@ namespace SafeCollections
         action(this._items[index]);
       if (version == this._version/* || !BinaryCompatibility.TargetsAtLeast_Desktop_V4_5*/)
         return;
-      throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+      throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
     }
 
     public SafeList<T>.Enumerator GetEnumerator()
@@ -811,7 +811,7 @@ namespace SafeCollections
       private bool MoveNextRare()
       {
         if (this.version != this.list._version)
-          throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+          throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
         this.index = this.list._size + 1;
         this.current = default (T);
         return false;
@@ -835,7 +835,7 @@ namespace SafeCollections
       void IEnumerator.Reset()
       {
         if (this.version != this.list._version)
-          throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+          throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
         this.index = 0;
         this.current = default (T);
       }

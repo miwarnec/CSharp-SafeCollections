@@ -942,7 +942,7 @@ namespace SafeCollections
       public bool MoveNext()
       {
         if (this.version != this.set.m_version)
-          throw new InvalidOperationException("InvalidOperation_EnumFailedVersion");
+          throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
         for (; this.index < this.set.m_lastIndex; ++this.index)
         {
           if (this.set.m_slots[this.index].hashCode >= 0)
@@ -978,7 +978,7 @@ namespace SafeCollections
       void IEnumerator.Reset()
       {
         if (this.version != this.set.m_version)
-          throw new InvalidOperationException("InvalidOperation_EnumFailedVersion");
+          throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
         this.index = 0;
         this.current = default (T);
       }

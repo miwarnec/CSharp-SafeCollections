@@ -694,7 +694,7 @@ label_18:
       public bool MoveNext()
       {
         if (this.version != this.dictionary.version)
-          throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+          throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
         for (; (uint) this.index < (uint) this.dictionary.count; ++this.index)
         {
           if (this.dictionary.entries[this.index].hashCode >= 0)
@@ -733,7 +733,7 @@ label_18:
       void IEnumerator.Reset()
       {
         if (this.version != this.dictionary.version)
-          throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+          throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
         this.index = 0;
         this.current = new KeyValuePair<TKey, TValue>();
       }
@@ -926,7 +926,7 @@ label_13:
       public bool MoveNext()
         {
           if (this.version != this.dictionary.version)
-            throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+            throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
           for (; (uint) this.index < (uint) this.dictionary.count; ++this.index)
           {
             if (this.dictionary.entries[this.index].hashCode >= 0)
@@ -959,7 +959,7 @@ label_13:
           void IEnumerator.Reset()
         {
           if (this.version != this.dictionary.version)
-            throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+            throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
           this.index = 0;
           this.currentKey = default (TKey);
         }
@@ -1122,7 +1122,7 @@ label_13:
       public bool MoveNext()
         {
           if (this.version != this.dictionary.version)
-            throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+            throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
           for (; (uint) this.index < (uint) this.dictionary.count; ++this.index)
           {
             if (this.dictionary.entries[this.index].hashCode >= 0)
@@ -1155,7 +1155,7 @@ label_13:
           void IEnumerator.Reset()
         {
           if (this.version != this.dictionary.version)
-            throw new InvalidOperationException("ExceptionResource.InvalidOperation_EnumFailedVersion");
+            throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
           this.index = 0;
           this.currentValue = default (TValue);
         }
