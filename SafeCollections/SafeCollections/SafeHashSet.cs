@@ -920,6 +920,7 @@ namespace SafeCollections
       private int index;
       private int version;
       private T current;
+      private Guid uniqueId;
 
       internal Enumerator(SafeHashSet<T> set)
       {
@@ -928,13 +929,14 @@ namespace SafeCollections
         this.version = set.m_version;
         this.current = default (T);
 
-        set.BeginEnumerating(); // CUSTOM CHANGE
+        this.uniqueId = Guid.NewGuid();
+        set.BeginEnumerating(this.uniqueId); // CUSTOM CHANGE
       }
 
 
       public void Dispose()
       {
-        set.EndEnumerating(); // CUSTOM CHANGE
+        set.EndEnumerating(this.uniqueId); // CUSTOM CHANGE
       }
 
       public bool MoveNext()

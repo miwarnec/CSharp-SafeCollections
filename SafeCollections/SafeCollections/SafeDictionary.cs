@@ -677,6 +677,8 @@ label_18:
       internal const int DictEntry = 1;
       internal const int KeyValuePair = 2;
 
+      private Guid uniqueId; // CUSTOM CHANGE
+
       internal Enumerator(SafeDictionary<TKey, TValue> dictionary, int getEnumeratorRetType)
       {
         this.dictionary = dictionary;
@@ -685,7 +687,8 @@ label_18:
         this.getEnumeratorRetType = getEnumeratorRetType;
         this.current = new KeyValuePair<TKey, TValue>();
 
-        dictionary.BeginEnumerating(); // CUSTOM CHANGE
+        this.uniqueId = Guid.NewGuid();
+        dictionary.BeginEnumerating(this.uniqueId); // CUSTOM CHANGE
       }
 
       public bool MoveNext()
@@ -714,7 +717,7 @@ label_18:
 
     public void Dispose()
     {
-      dictionary.EndEnumerating(); // CUSTOM CHANGE
+      dictionary.EndEnumerating(this.uniqueId); // CUSTOM CHANGE
     }
 
       object IEnumerator.Current
@@ -902,6 +905,7 @@ label_13:
         private int index;
         private int version;
         private TKey currentKey;
+        private Guid uniqueId; // CUSTOM CHANGE
 
         internal Enumerator(SafeDictionary<TKey, TValue> dictionary)
         {
@@ -910,12 +914,13 @@ label_13:
           this.index = 0;
           this.currentKey = default (TKey);
 
-          dictionary.BeginEnumerating(); // CUSTOM CHANGE
+          this.uniqueId = Guid.NewGuid();
+          dictionary.BeginEnumerating(this.uniqueId); // CUSTOM CHANGE
         }
 
       public void Dispose()
         {
-          dictionary.EndEnumerating(); // CUSTOM CHANGE
+          dictionary.EndEnumerating(this.uniqueId); // CUSTOM CHANGE
         }
 
       public bool MoveNext()
@@ -1096,6 +1101,7 @@ label_13:
         private int index;
         private int version;
         private TValue currentValue;
+        private Guid uniqueId;
 
         internal Enumerator(SafeDictionary<TKey, TValue> dictionary)
         {
@@ -1104,12 +1110,13 @@ label_13:
           this.index = 0;
           this.currentValue = default (TValue);
 
-          dictionary.BeginEnumerating(); // CUSTOM CHANGE
+          this.uniqueId = Guid.NewGuid();
+          dictionary.BeginEnumerating(this.uniqueId); // CUSTOM CHANGE
         }
 
       public void Dispose()
         {
-          dictionary.EndEnumerating(); // CUSTOM CHANGE
+          dictionary.EndEnumerating(this.uniqueId); // CUSTOM CHANGE
         }
 
       public bool MoveNext()

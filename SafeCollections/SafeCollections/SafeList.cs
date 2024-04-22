@@ -779,6 +779,7 @@ namespace SafeCollections
       private int index;
       private int version;
       private T current;
+      private Guid uniqueId;
 
       internal Enumerator(SafeList<T> list)
       {
@@ -787,13 +788,14 @@ namespace SafeCollections
         this.version = list._version;
         this.current = default (T);
 
-        list.BeginEnumerating(); // CUSTOM CHANGE
+        this.uniqueId = Guid.NewGuid();
+        list.BeginEnumerating(this.uniqueId); // CUSTOM CHANGE
       }
 
 
       public void Dispose()
       {
-        list.EndEnumerating(); // CUSTOM CHANGE
+        list.EndEnumerating(this.uniqueId); // CUSTOM CHANGE
       }
 
       public bool MoveNext()
