@@ -858,18 +858,14 @@ namespace SafeCollections
         this.index = 0;
         this.version = list._version;
         this.current = default (T);
-        
-        // CUSTOM CHANGE
-        list.enumerating = true;
-        // END CUSTOM CHANGE
+
+        list.BeginEnumerating(); // CUSTOM CHANGE
       }
 
-      
+
       public void Dispose()
       {
-        // CUSTOM CHANGE
-        list.enumerating = false;
-        // END CUSTOM CHANGE
+        list.EndEnumerating(); // CUSTOM CHANGE
       }
 
       public bool MoveNext()

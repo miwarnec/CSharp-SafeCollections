@@ -3,7 +3,18 @@ namespace SafeCollections
 {
     public abstract class SafeCollection
     {
-        protected bool enumerating = false;
+        bool enumerating = false;
+
+        // call this when beginning / ending enumeration
+        protected void BeginEnumerating()
+        {
+          enumerating = true;
+        }
+
+        protected void EndEnumerating()
+        {
+          enumerating = false;
+        }
 
         // call this internally before any writes to the collection.
         protected void CheckEnumerating()

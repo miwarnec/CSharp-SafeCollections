@@ -725,10 +725,8 @@ label_18:
         this.index = 0;
         this.getEnumeratorRetType = getEnumeratorRetType;
         this.current = new KeyValuePair<TKey, TValue>();
-        
-        // CUSTOM CHANGE
-        dictionary.enumerating = true;
-        // END CUSTOM CHANGE
+
+        dictionary.BeginEnumerating(); // CUSTOM CHANGE
       }
 
       public bool MoveNext()
@@ -754,12 +752,10 @@ label_18:
         get => this.current;
       }
 
-      
+
     public void Dispose()
     {
-      // CUSTOM CHANGE
-      dictionary.enumerating = false;
-      // END CUSTOM CHANGE
+      dictionary.EndEnumerating(); // CUSTOM CHANGE
     }
 
       object IEnumerator.Current
@@ -957,14 +953,12 @@ label_13:
           this.index = 0;
           this.currentKey = default (TKey);
 
-          dictionary.enumerating = true;
+          dictionary.BeginEnumerating(); // CUSTOM CHANGE
         }
 
       public void Dispose()
         {
-          // CUSTOM CHANGE
-          dictionary.enumerating = false;
-          // END CUSTOM CHANGE
+          dictionary.EndEnumerating(); // CUSTOM CHANGE
         }
 
       public bool MoveNext()
@@ -1156,14 +1150,12 @@ label_13:
           this.index = 0;
           this.currentValue = default (TValue);
 
-          dictionary.enumerating = true;
+          dictionary.BeginEnumerating(); // CUSTOM CHANGE
         }
 
       public void Dispose()
         {
-          // CUSTOM CHANGE
-          dictionary.enumerating = false;
-          // END CUSTOM CHANGE
+          dictionary.EndEnumerating(); // CUSTOM CHANGE
         }
 
       public bool MoveNext()

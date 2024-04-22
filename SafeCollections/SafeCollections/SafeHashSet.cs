@@ -989,21 +989,16 @@ namespace SafeCollections
         this.index = 0;
         this.version = set.m_version;
         this.current = default (T);
-        
-        // CUSTOM CHANGE
-        set.enumerating = true;
-        // END CUSTOM CHANGE
+
+        set.BeginEnumerating(); // CUSTOM CHANGE
       }
 
-      
+
       public void Dispose()
       {
-        // CUSTOM CHANGE
-        set.enumerating = false;
-        // END CUSTOM CHANGE
+        set.EndEnumerating(); // CUSTOM CHANGE
       }
 
-      
       public bool MoveNext()
       {
         if (this.version != this.set.m_version)
