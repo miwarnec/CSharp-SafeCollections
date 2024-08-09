@@ -1,6 +1,10 @@
 // base class for all safe collections, with common code.
 
+// explicitly define imports for Unity support:
+using System;
+using System.Collections.Generic;
 using System.Text;
+using System.Threading;
 
 namespace SafeCollections
 {

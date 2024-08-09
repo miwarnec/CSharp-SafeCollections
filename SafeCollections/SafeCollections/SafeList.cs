@@ -1,8 +1,12 @@
 // based on Unity's C# HashSet<T>, which is based on Mono C#.
 
+// explicitly define imports for Unity support:
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Threading;
 
 namespace SafeCollections
 {
